@@ -36,12 +36,22 @@ scriptencoding utf-8
 
 function! editorconfig#charset#execute(value) abort
   " encoding
-  if a:value is? 'utf-8-bom'
-    setlocal fileencoding=utf-8
-    setlocal bomb
-  elseif type(a:value) == type("") && s:match_encoding_pattern(a:value)
-    let &fileencoding = a:value
-  elseif get(g:, 'editorconfig_verbose', 0)
+  if type(a:value) == type("")
+    if has_key(s:encoding_aliases, tolower(a:value))
+      let l:enc_name = s:encoding_aliases[tolower(a:value)]
+    else
+      let l:enc_name = a:value
+    endif
+    if l:enc_name is? 'utf-8-bom'
+      setlocal fileencoding=utf-8
+      setlocal bomb
+      return
+    elseif s:match_encoding_pattern(l:enc_name)
+      let &fileencoding = l:enc_name
+      return
+    endif
+  endif
+  if get(g:, 'editorconfig_verbose', 0)
     echoerr printf('editorconfig: unsupported value: charset=%s', a:value)
   endif
 endfunction
@@ -112,5 +122,11 @@ let s:encoding_patterns = [
       \ '^2byte-\S\+$',
       \ '^cp\d\+$',
       \ ]
-
+let s:encoding_aliases = {
+      \ 'ms932': 'cp932',
+      \ 'ms936': 'cp936',
+      \ 'ms874': 'cp874',
+      \ 'ms949': 'cp949',
+      \ 'ms950': 'cp950',
+      \}
 " 1}}}
